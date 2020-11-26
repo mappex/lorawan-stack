@@ -135,6 +135,7 @@ const DocLink = function(props) {
     secondary,
     primary,
     disabled,
+    tabIndex,
     to,
     raw,
     onClick,
@@ -165,6 +166,7 @@ const DocLink = function(props) {
       target="blank"
       name={name}
       onClick={onClick}
+      tabIndex={tabIndex}
     >
       {!raw && <Icon className={style.docIcon} icon="book" />}
       {children}
@@ -212,6 +214,7 @@ const GlossaryLink = ({ glossaryId, term, hideTerm, primary, secondary, classNam
       path={`/reference/glossary#${glossaryId}`}
       title={m.glossaryTitle}
       titleValues={{ term: formatTitle(term, undefined, formatMessage) }}
+      tabIndex="-1"
       raw
     >
       {!hideTerm && <Message content={term} />}{' '}
