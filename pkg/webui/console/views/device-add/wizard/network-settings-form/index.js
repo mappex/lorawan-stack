@@ -127,6 +127,7 @@ const NetworkSettingsForm = props => {
         component={Checkbox}
         disabled={isMulticast}
         glossaryId={glossaryId.CLASS_C}
+        glossaryTerm={sharedMessages.classC}
       />
       <Form.Field
         title={sharedMessages.frameCounterWidth}
