@@ -12,6 +12,8 @@ For details about compatibility between different releases, see the **Commitment
 ### Added
 
 ### Changed
+- Form field layouts in the Console (field labels are now dispayed above the field).
+- Small structural changes to the custom webhook form in the Console.
 
 ### Deprecated
 
