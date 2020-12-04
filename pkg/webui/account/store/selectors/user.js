@@ -12,12 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-.full-height
-  height: 100%
-  +media-query($bp.s)
-    height: auto
+const selectUserStore = state => state.user
 
-.title
-  h1()
-  margin-bottom: $ls.m
-  line-height: 1
+export const selectUser = state => selectUserStore(state).user
+
+export const selectUserId = function(state) {
+  const user = selectUser(state)
+  const { ids = {} } = user
+
+  return ids.user_id
+}
+
+export const selectUserIsAdmin = function(state) {
+  const user = selectUser(state)
+  return user.isAdmin
+}
+
+export const selectUserRights = state => selectUserStore(state).rights

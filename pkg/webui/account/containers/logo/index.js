@@ -12,20 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-.center
-  center-absolute()
-  width: 100%
-  padding: $ls.xxs
-  box-sizing: border-box
-  max-width: 40rem
+import React from 'react'
 
-.logo
-  justify-content: center
-  margin-bottom: $ls.s
+import LogoComponent from '@ttn-lw/components/logo'
 
-.go-to-login
-  display: block
-  text-align: center
+import {
+  selectAssetsRootPath,
+  selectBrandingRootPath,
+  selectApplicationSiteName,
+} from '@ttn-lw/lib/selectors/env'
 
-.heading
-  text-align: center
+const logo = {
+  src: `${selectAssetsRootPath()}/account.svg`,
+  alt: `${selectApplicationSiteName()} Logo`,
+}
+const hasCustomBranding = selectBrandingRootPath() !== selectAssetsRootPath()
+const brandLogo = hasCustomBranding
+  ? {
+      src: `${selectBrandingRootPath()}/logo.svg`,
+      alt: 'Logo',
+    }
+  : undefined
+
+const Logo = props => <LogoComponent logo={logo} brandLogo={brandLogo} {...props} />
+
+export default Logo
