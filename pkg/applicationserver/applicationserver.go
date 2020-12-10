@@ -45,6 +45,7 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/messageprocessors"
 	"go.thethings.network/lorawan-stack/v3/pkg/messageprocessors/cayennelpp"
+	"go.thethings.network/lorawan-stack/v3/pkg/messageprocessors/devicerepository"
 	"go.thethings.network/lorawan-stack/v3/pkg/messageprocessors/javascript"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/unique"
@@ -126,6 +127,18 @@ func New(c *component.Component, conf *Config) (as *ApplicationServer, err error
 		formatters: payloadFormatters(map[ttnpb.PayloadFormatter]messageprocessors.PayloadEncodeDecoder{
 			ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT: javascript.New(),
 			ttnpb.PayloadFormatter_FORMATTER_CAYENNELPP: cayennelpp.New(),
+			ttnpb.PayloadFormatter_FORMATTER_REPOSITORY: devicerepository.New(
+				map[ttnpb.PayloadFormatter]messageprocessors.PayloadEncodeDecoder{
+					ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT: javascript.New(),
+					ttnpb.PayloadFormatter_FORMATTER_CAYENNELPP: cayennelpp.New(),
+				},
+				func() (*grpc.ClientConn, error) {
+					return c.GetPeerConn(ctx, ttnpb.ClusterRole_DEVICE_REPOSITORY, nil)
+				},
+				func() []grpc.CallOption {
+					return []grpc.CallOption{c.WithClusterAuth()}
+				},
+			),
 		}),
 		interopClient:    interopCl,
 		interopID:        conf.Interop.ID,
