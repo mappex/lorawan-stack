@@ -2208,9 +2208,6 @@ PeerInfo
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `brands` | [`EndDeviceBrand`](#ttn.lorawan.v3.EndDeviceBrand) | repeated |  |
-| `total` | [`uint32`](#uint32) |  |  |
-| `count` | [`uint32`](#uint32) |  |  |
-| `offset` | [`uint32`](#uint32) |  |  |
 
 ### <a name="ttn.lorawan.v3.ListEndDeviceModelsRequest">Message `ListEndDeviceModelsRequest`</a>
 
@@ -2235,9 +2232,6 @@ PeerInfo
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `models` | [`EndDeviceModel`](#ttn.lorawan.v3.EndDeviceModel) | repeated |  |
-| `total` | [`uint32`](#uint32) |  |  |
-| `count` | [`uint32`](#uint32) |  |  |
-| `offset` | [`uint32`](#uint32) |  |  |
 
 ### <a name="ttn.lorawan.v3.MessagePayloadFormatter">Message `MessagePayloadFormatter`</a>
 
