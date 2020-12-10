@@ -5669,6 +5669,15 @@
       "file": "cayennelpp.go"
     }
   },
+  "error:pkg/messageprocessors/devicerepository:formatter_not_supported": {
+    "translations": {
+      "en": "formatter `{formatter}` not supported"
+    },
+    "description": {
+      "package": "pkg/messageprocessors/devicerepository",
+      "file": "devicerepository.go"
+    }
+  },
   "error:pkg/messageprocessors/javascript:input": {
     "translations": {
       "en": "invalid input"
