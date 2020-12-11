@@ -2182,8 +2182,8 @@ PeerInfo
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `brand_id` | [`string`](#string) |  | Query end devices from a specific brand |
-| `model_id` | [`string`](#string) |  | Query end devices matching a specific model |
+| `brand_id` | [`string`](#string) |  | Brand identifier, as defined in the Device Repository. |
+| `model_id` | [`string`](#string) |  | Model identifier, as defined in the Device Repository. |
 | `field_mask` | [`google.protobuf.FieldMask`](#google.protobuf.FieldMask) |  | Field mask paths. |
 
 ### <a name="ttn.lorawan.v3.ListEndDeviceBrandsRequest">Message `ListEndDeviceBrandsRequest`</a>
