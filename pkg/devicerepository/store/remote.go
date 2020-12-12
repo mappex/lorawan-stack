@@ -221,7 +221,7 @@ var (
 )
 
 // getCodec retrieves codec information for a specific model and returns.
-func (s *remoteStore) getCodec(ids *ttnpb.EndDeviceVersionIdentifiers, chooseFile func(EndDeviceCodec) string) (string, error) {
+func (s *remoteStore) getCodec(ids *ttnpb.EndDeviceVersionIdentifiers, chooseFile func(EndDeviceCodec) string) (*ttnpb.MessagePayloadFormatter, error) {
 	models, err := s.GetModels(GetModelsRequest{
 		BrandID: ids.BrandID,
 		ModelID: ids.ModelID,
@@ -230,10 +230,10 @@ func (s *remoteStore) getCodec(ids *ttnpb.EndDeviceVersionIdentifiers, chooseFil
 		},
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if len(models.Models) == 0 {
-		return "", errModelNotFound.WithAttributes("brand_id", ids.BrandID, "model_id", ids.ModelID)
+		return nil, errModelNotFound.WithAttributes("brand_id", ids.BrandID, "model_id", ids.ModelID)
 	}
 	model := models.Models[0]
 	for _, ver := range model.FirmwareVersions {
@@ -242,37 +242,40 @@ func (s *remoteStore) getCodec(ids *ttnpb.EndDeviceVersionIdentifiers, chooseFil
 		}
 
 		if _, ok := bandIDToRegion[ids.BandID]; !ok {
-			return "", errUnknownBand.WithAttributes("unknown_band", ids.BandID)
+			return nil, errUnknownBand.WithAttributes("unknown_band", ids.BandID)
 		}
 		profileInfo, ok := ver.Profiles[ids.BandID]
 		if !ok {
-			return "", errNoProfile.WithAttributes(
+			return nil, errNoProfile.WithAttributes(
 				"band_id", ids.BandID,
 			)
 		}
 
 		if profileInfo.CodecID == "" {
-			return "", errNoCodec.WithAttributes("firmware_version", ids.FirmwareVersion, "band_id", ids.BandID)
+			return nil, errNoCodec.WithAttributes("firmware_version", ids.FirmwareVersion, "band_id", ids.BandID)
 		}
 
 		codec := EndDeviceCodec{}
 		b, err := s.fetcher.File("vendor", ids.BrandID, profileInfo.CodecID+".yaml")
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if err := yaml.Unmarshal(b, &codec); err != nil {
-			return "", err
+			return nil, err
 		}
 		if file := chooseFile(codec); file != "" {
 			b, err := s.fetcher.File("vendor", ids.BrandID, file)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
-			return string(b), nil
+			return &ttnpb.MessagePayloadFormatter{
+				Formatter:          ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT,
+				FormatterParameter: string(b),
+			}, nil
 		}
 	}
 
-	return "", errFirmwareVersionNotFound.WithAttributes(
+	return nil, errFirmwareVersionNotFound.WithAttributes(
 		"brand_id", ids.BrandID,
 		"model_id", ids.ModelID,
 		"firmware_version", ids.FirmwareVersion,
@@ -280,16 +283,16 @@ func (s *remoteStore) getCodec(ids *ttnpb.EndDeviceVersionIdentifiers, chooseFil
 }
 
 // GetUplinkDecoder retrieves the codec for decoding uplink messages.
-func (s *remoteStore) GetUplinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (string, error) {
+func (s *remoteStore) GetUplinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
 	return s.getCodec(ids, func(c EndDeviceCodec) string { return c.UplinkDecoder.FileName })
 }
 
 // GetDownlinkDecoder retrieves the codec for decoding downlink messages.
-func (s *remoteStore) GetDownlinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (string, error) {
+func (s *remoteStore) GetDownlinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
 	return s.getCodec(ids, func(c EndDeviceCodec) string { return c.DownlinkDecoder.FileName })
 }
 
 // GetDownlinkEncoder retrieves the codec for encoding downlink messages.
-func (s *remoteStore) GetDownlinkEncoder(ids *ttnpb.EndDeviceVersionIdentifiers) (string, error) {
+func (s *remoteStore) GetDownlinkEncoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
 	return s.getCodec(ids, func(c EndDeviceCodec) string { return c.DownlinkEncoder.FileName })
 }

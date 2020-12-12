@@ -495,12 +495,12 @@ func TestRemoteStore(t *testing.T) {
 			} {
 				codec, err := s.GetDownlinkDecoder(&ids)
 				a.So(errors.IsNotFound(err), should.BeTrue)
-				a.So(codec, should.Equal, "")
+				a.So(codec, should.Equal, nil)
 			}
 		})
 		for _, tc := range []struct {
 			name  string
-			f     func(*ttnpb.EndDeviceVersionIdentifiers) (string, error)
+			f     func(*ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error)
 			codec string
 		}{
 			{
@@ -530,7 +530,10 @@ func TestRemoteStore(t *testing.T) {
 				}
 				codec, err := tc.f(versionIDs)
 				a.So(err, should.BeNil)
-				a.So(codec, should.Equal, tc.codec)
+				a.So(codec, should.Resemble, &ttnpb.MessagePayloadFormatter{
+					Formatter:          ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT,
+					FormatterParameter: tc.codec,
+				})
 			})
 		}
 	})
