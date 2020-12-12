@@ -7814,6 +7814,16 @@
           "extensions": [],
           "fields": [
             {
+              "name": "application_ids",
+              "description": "Application identifiers.",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            },
+            {
               "name": "brand_id",
               "description": "Brand identifier, as defined in the Device Repository.",
               "label": "",
@@ -7844,6 +7854,16 @@
           "hasFields": true,
           "extensions": [],
           "fields": [
+            {
+              "name": "application_ids",
+              "description": "Application identifiers.",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            },
             {
               "name": "brand_id",
               "description": "Brand identifier, as defined in the Device Repository.",
@@ -7877,6 +7897,68 @@
           ]
         },
         {
+          "name": "GetPayloadFormatterRequest",
+          "longName": "GetPayloadFormatterRequest",
+          "fullName": "ttn.lorawan.v3.GetPayloadFormatterRequest",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "application_ids",
+              "description": "Application identifiers.",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            },
+            {
+              "name": "version_ids",
+              "description": "End device version information.",
+              "label": "",
+              "type": "EndDeviceVersionIdentifiers",
+              "longType": "EndDeviceVersionIdentifiers",
+              "fullType": "ttn.lorawan.v3.EndDeviceVersionIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
+          "name": "GetTemplateRequest",
+          "longName": "GetTemplateRequest",
+          "fullName": "ttn.lorawan.v3.GetTemplateRequest",
+          "description": "",
+          "hasExtensions": false,
+          "hasFields": true,
+          "extensions": [],
+          "fields": [
+            {
+              "name": "application_ids",
+              "description": "Application identifiers.",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            },
+            {
+              "name": "version_ids",
+              "description": "End device version information.",
+              "label": "",
+              "type": "EndDeviceVersionIdentifiers",
+              "longType": "EndDeviceVersionIdentifiers",
+              "fullType": "ttn.lorawan.v3.EndDeviceVersionIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            }
+          ]
+        },
+        {
           "name": "ListEndDeviceBrandsRequest",
           "longName": "ListEndDeviceBrandsRequest",
           "fullName": "ttn.lorawan.v3.ListEndDeviceBrandsRequest",
@@ -7885,6 +7967,16 @@
           "hasFields": true,
           "extensions": [],
           "fields": [
+            {
+              "name": "application_ids",
+              "description": "Application identifiers.",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            },
             {
               "name": "limit",
               "description": "Limit the number of results per page.",
@@ -7989,6 +8081,16 @@
           "hasFields": true,
           "extensions": [],
           "fields": [
+            {
+              "name": "application_ids",
+              "description": "Application identifiers.",
+              "label": "",
+              "type": "ApplicationIdentifiers",
+              "longType": "ApplicationIdentifiers",
+              "fullType": "ttn.lorawan.v3.ApplicationIdentifiers",
+              "ismap": false,
+              "defaultValue": ""
+            },
             {
               "name": "brand_id",
               "description": "List end devices from a specific brand.",
@@ -8160,6 +8262,10 @@
                     {
                       "method": "GET",
                       "pattern": "/dr/brands"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands"
                     }
                   ]
                 }
@@ -8182,6 +8288,10 @@
                     {
                       "method": "GET",
                       "pattern": "/dr/brands/{brand_id}"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands/{brand_id}"
                     }
                   ]
                 }
@@ -8208,6 +8318,14 @@
                     {
                       "method": "GET",
                       "pattern": "/dr/models"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/appications/{application_ids.application_id}/brands/{brand_id}/models"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/models"
                     }
                   ]
                 }
@@ -8230,6 +8348,10 @@
                     {
                       "method": "GET",
                       "pattern": "/dr/brands/{brand_id}/models/{model_id}"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands/{brand_id}/models/{model_id}"
                     }
                   ]
                 }
@@ -8238,9 +8360,9 @@
             {
               "name": "GetTemplate",
               "description": "",
-              "requestType": "EndDeviceVersionIdentifiers",
-              "requestLongType": "EndDeviceVersionIdentifiers",
-              "requestFullType": "ttn.lorawan.v3.EndDeviceVersionIdentifiers",
+              "requestType": "GetTemplateRequest",
+              "requestLongType": "GetTemplateRequest",
+              "requestFullType": "ttn.lorawan.v3.GetTemplateRequest",
               "requestStreaming": false,
               "responseType": "EndDeviceTemplate",
               "responseLongType": "EndDeviceTemplate",
@@ -8251,7 +8373,11 @@
                   "rules": [
                     {
                       "method": "GET",
-                      "pattern": "/dr/brands/{brand_id}/models/{model_id}/{firmware_version}/{band_id}/template"
+                      "pattern": "/dr/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/template"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/template"
                     }
                   ]
                 }
@@ -8260,9 +8386,9 @@
             {
               "name": "GetUplinkDecoder",
               "description": "",
-              "requestType": "EndDeviceVersionIdentifiers",
-              "requestLongType": "EndDeviceVersionIdentifiers",
-              "requestFullType": "ttn.lorawan.v3.EndDeviceVersionIdentifiers",
+              "requestType": "GetPayloadFormatterRequest",
+              "requestLongType": "GetPayloadFormatterRequest",
+              "requestFullType": "ttn.lorawan.v3.GetPayloadFormatterRequest",
               "requestStreaming": false,
               "responseType": "MessagePayloadFormatter",
               "responseLongType": "MessagePayloadFormatter",
@@ -8273,7 +8399,11 @@
                   "rules": [
                     {
                       "method": "GET",
-                      "pattern": "/dr/brands/{brand_id}/models/{model_id}/{firmware_version}/{band_id}/formatters/uplink/decoder"
+                      "pattern": "/dr/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/formatters/uplink/decoder"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/formatters/uplink/decoder"
                     }
                   ]
                 }
@@ -8282,9 +8412,9 @@
             {
               "name": "GetDownlinkDecoder",
               "description": "",
-              "requestType": "EndDeviceVersionIdentifiers",
-              "requestLongType": "EndDeviceVersionIdentifiers",
-              "requestFullType": "ttn.lorawan.v3.EndDeviceVersionIdentifiers",
+              "requestType": "GetPayloadFormatterRequest",
+              "requestLongType": "GetPayloadFormatterRequest",
+              "requestFullType": "ttn.lorawan.v3.GetPayloadFormatterRequest",
               "requestStreaming": false,
               "responseType": "MessagePayloadFormatter",
               "responseLongType": "MessagePayloadFormatter",
@@ -8295,7 +8425,11 @@
                   "rules": [
                     {
                       "method": "GET",
-                      "pattern": "/dr/brands/{brand_id}/models/{model_id}/{firmware_version}/{band_id}/formatters/downlink/decoder"
+                      "pattern": "/dr/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/formatters/downlink/decoder"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/formatters/downlink/decoder"
                     }
                   ]
                 }
@@ -8304,9 +8438,9 @@
             {
               "name": "GetDownlinkEncoder",
               "description": "",
-              "requestType": "EndDeviceVersionIdentifiers",
-              "requestLongType": "EndDeviceVersionIdentifiers",
-              "requestFullType": "ttn.lorawan.v3.EndDeviceVersionIdentifiers",
+              "requestType": "GetPayloadFormatterRequest",
+              "requestLongType": "GetPayloadFormatterRequest",
+              "requestFullType": "ttn.lorawan.v3.GetPayloadFormatterRequest",
               "requestStreaming": false,
               "responseType": "MessagePayloadFormatter",
               "responseLongType": "MessagePayloadFormatter",
@@ -8317,7 +8451,11 @@
                   "rules": [
                     {
                       "method": "GET",
-                      "pattern": "/dr/brands/{brand_id}/models/{model_id}/{firmware_version}/{band_id}/formatters/downlink/encoder"
+                      "pattern": "/dr/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/formatters/downlink/encoder"
+                    },
+                    {
+                      "method": "GET",
+                      "pattern": "/dr/applications/{application_ids.application_id}/brands/{version_ids.brand_id}/models/{version_ids.model_id}/{version_ids.firmware_version}/{version_ids.band_id}/formatters/downlink/encoder"
                     }
                   ]
                 }
