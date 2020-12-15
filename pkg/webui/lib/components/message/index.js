@@ -14,13 +14,21 @@
 
 import React from 'react'
 import { FormattedMessage } from 'react-intl'
+import { sanitize } from 'dompurify'
 import classnames from 'classnames'
 
 import PropTypes from '@ttn-lw/lib/prop-types'
+import replaceBackQuotes from '@ttn-lw/lib/replace-back-quotes'
 
 import style from './message.styl'
 
-const renderContent = (content, component, props) => {
+const renderHtmlContent = content => {
+  const contentWithHtml = content.map(subContent => subContent.map(replaceBackQuotes))
+
+  return sanitize(contentWithHtml)
+}
+
+const renderContent = (content, component, props, hasHtml) => {
   let Component = component
   if (!Boolean(component)) {
     if (Boolean(props.className)) {
@@ -31,13 +39,25 @@ const renderContent = (content, component, props) => {
   }
 
   if (Boolean(Component) || Boolean(props.className)) {
-    return <Component {...props}>{content}</Component>
+    return (
+      <Component {...props}>
+        {hasHtml ? (
+          <span
+            dangerouslySetInnerHTML={{
+              __html: renderHtmlContent(content),
+            }}
+          />
+        ) : (
+          content
+        )}
+      </Component>
+    )
   }
 
   return content
 }
 
-const Message = function({
+const Message = ({
   content,
   values = {},
   component,
@@ -47,8 +67,9 @@ const Message = function({
   firstToLower,
   capitalize,
   className,
+  hasHtml,
   ...rest
-}) {
+}) => {
   const cls = classnames(className, {
     [style.lowercase]: lowercase,
     [style.uppercase]: uppercase,
@@ -67,12 +88,12 @@ const Message = function({
   }
 
   if (typeof content === 'string' || typeof content === 'number') {
-    return renderContent(content, component, rest)
+    return renderContent(content, component, rest, hasHtml)
   }
 
   return (
     <FormattedMessage {...content} values={vals}>
-      {(...children) => renderContent(children, component, rest)}
+      {(...children) => renderContent(children, component, rest, hasHtml)}
     </FormattedMessage>
   )
 }
@@ -105,6 +126,10 @@ Message.propTypes = {
    */
   firstToUpper: PropTypes.bool,
   /**
+   * Flag specifying whether the the message content contains HTML.
+   */
+  hasHtml: PropTypes.bool,
+  /**
    * Flag specifying whether the the message should be transformed to
    * lowercase.
    */
@@ -124,6 +149,7 @@ Message.defaultProps = {
   component: undefined,
   firstToLower: false,
   firstToUpper: false,
+  hasHtml: false,
   lowercase: false,
   uppercase: false,
   values: undefined,
