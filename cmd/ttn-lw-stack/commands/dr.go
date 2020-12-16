@@ -16,50 +16,35 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"go.thethings.network/lorawan-stack/v3/pkg/errors"
+	"go.thethings.network/lorawan-stack/v3/pkg/devicerepository/store/index"
+	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
 )
 
 var (
-	errInvalidIndexType = errors.DefineInvalidArgument("invalid_index_type", "invalid index type `{type}`")
-	drCommand           = &cobra.Command{
+	drCommand = &cobra.Command{
 		Use:   "dr",
 		Short: "Device Repository commands",
 	}
 	drCreateIndexCommand = &cobra.Command{
-		Use:   "create-index",
-		Short: "Create a new index for the Device Repository",
+		Use:   "create-package",
+		Short: "Create a new package for the Device Repository",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Info("Creating new index...")
-			destination, _ := cmd.Flags().GetString("destination")
-			if destination == "" {
-				return errMissingFlag.WithAttributes("flag", "destination")
-			}
 
-			// TODO: this is not too clean
-			switch drConfig := config.DR; drConfig.Index.Type {
-			case "bleve":
-				// FIXME: this can be a bit cleaner.
-				// Clean index configuration so that we create the store correctly.
-				drConfig.Index.Type = ""
-				store, err := drConfig.NewStore(ctx)
-				if err != nil {
-					return err
-				}
-				drConfig.Index.Bleve.Store = store
-				indexer, err := drConfig.Index.Bleve.NewIndexer(ctx, store)
-				if err != nil {
-					return nil
-				}
-
-				if err := indexer.IndexBrands(destination); err != nil {
-					return err
-				}
-				if err := indexer.IndexModels(destination); err != nil {
-					return err
-				}
-			default:
-				return errInvalidIndexType.WithAttributes("type", drConfig.Index.Type)
+			output, _ := cmd.Flags().GetString("output")
+			if output == "" {
+				return errMissingFlag.WithAttributes("flag", "output")
 			}
+			source, _ := cmd.Flags().GetString("source")
+			if source == "" {
+				return errMissingFlag.WithAttributes("flag", "source")
+			}
+			overwrite, _ := cmd.Flags().GetBool("overwrite")
+
+			if err := index.CreatePackage(ctx, fetch.FromFilesystem(source), source, output, overwrite); err != nil {
+				return err
+			}
+			logger.WithField("path", output).Info("Successfully created index")
 			return nil
 		},
 	}
@@ -68,6 +53,8 @@ var (
 func init() {
 	Root.AddCommand(drCommand)
 
-	drCreateIndexCommand.Flags().String("destination", "", "Place to create the new index")
+	drCreateIndexCommand.Flags().String("output", "", "Place to create the new index")
+	drCreateIndexCommand.Flags().String("source", "", "Path to root directory of lorawan-devices repository")
+	drCreateIndexCommand.Flags().Bool("overwrite", false, "Overwrite previous index files")
 	drCommand.AddCommand(drCreateIndexCommand)
 }
