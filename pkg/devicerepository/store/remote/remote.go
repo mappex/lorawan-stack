@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package store
+package remote
 
 import (
+	"go.thethings.network/lorawan-stack/v3/pkg/devicerepository/store"
 	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
@@ -29,8 +30,8 @@ type remoteStore struct {
 // NewRemoteStore initializes a new Store using a fetcher. Avoid using directly,
 // use bleve.NewIndexedStore instead. Searching and ordering are not supported,
 // and some operations can be very slow.
-func NewRemoteStore(fetcher fetch.Interface) (Store, error) {
-	return &remoteStore{fetcher}, nil
+func NewRemoteStore(fetcher fetch.Interface) store.Store {
+	return &remoteStore{fetcher}
 }
 
 // paginate returns page start and end indices, and false if the page is invalid.
@@ -50,7 +51,7 @@ func paginate(size int, limit, page uint32) (uint32, uint32) {
 }
 
 // GetBrands gets available end device vendors from the vendor/index.yaml file.
-func (s *remoteStore) GetBrands(req GetBrandsRequest) (*GetBrandsResponse, error) {
+func (s *remoteStore) GetBrands(req store.GetBrandsRequest) (*store.GetBrandsResponse, error) {
 	b, err := s.fetcher.File("vendor", "index.yaml")
 	if err != nil {
 		return nil, err
@@ -74,7 +75,7 @@ func (s *remoteStore) GetBrands(req GetBrandsRequest) (*GetBrandsResponse, error
 	}
 
 	start, end := paginate(len(brands), req.Limit, req.Page)
-	return &GetBrandsResponse{
+	return &store.GetBrandsResponse{
 		Count:  end - start,
 		Offset: start,
 		Total:  uint32(len(brands)),
@@ -87,7 +88,7 @@ var (
 )
 
 // listModelsByBrand gets available end device models by a single brand.
-func (s *remoteStore) listModelsByBrand(req GetModelsRequest) (*GetModelsResponse, error) {
+func (s *remoteStore) listModelsByBrand(req store.GetModelsRequest) (*store.GetModelsResponse, error) {
 	b, err := s.fetcher.File("vendor", req.BrandID, "index.yaml")
 	if err != nil {
 		return nil, errUnknownBrand.WithAttributes("brand_id", req.BrandID)
@@ -118,7 +119,7 @@ func (s *remoteStore) listModelsByBrand(req GetModelsRequest) (*GetModelsRespons
 		}
 		models = append(models, pb)
 	}
-	return &GetModelsResponse{
+	return &store.GetModelsResponse{
 		Count:  end - start,
 		Offset: start,
 		Total:  uint32(len(index.EndDevices)),
@@ -127,19 +128,19 @@ func (s *remoteStore) listModelsByBrand(req GetModelsRequest) (*GetModelsRespons
 }
 
 // GetModels gets available end device models. Note that this can be very slow, and does not support searching/sorting.
-func (s *remoteStore) GetModels(req GetModelsRequest) (*GetModelsResponse, error) {
+func (s *remoteStore) GetModels(req store.GetModelsRequest) (*store.GetModelsResponse, error) {
 	if req.BrandID != "" {
 		return s.listModelsByBrand(req)
 	}
 	all := []*ttnpb.EndDeviceModel{}
-	brands, err := s.GetBrands(GetBrandsRequest{
+	brands, err := s.GetBrands(store.GetBrandsRequest{
 		Paths: []string{"brand_id"},
 	})
 	if err != nil {
 		return nil, err
 	}
 	for _, brand := range brands.Brands {
-		models, err := s.GetModels(GetModelsRequest{
+		models, err := s.GetModels(store.GetModelsRequest{
 			Paths:   req.Paths,
 			BrandID: brand.BrandID,
 			Limit:   req.Limit,
@@ -154,7 +155,7 @@ func (s *remoteStore) GetModels(req GetModelsRequest) (*GetModelsResponse, error
 	}
 
 	start, end := paginate(len(all), req.Limit, req.Page)
-	return &GetModelsResponse{
+	return &store.GetModelsResponse{
 		Count:  end - start,
 		Offset: start,
 		Total:  uint32(len(all)),
@@ -169,7 +170,7 @@ var (
 
 // GetTemplate retrieves an end device template for an end device definition.
 func (s *remoteStore) GetTemplate(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.EndDeviceTemplate, error) {
-	models, err := s.GetModels(GetModelsRequest{
+	models, err := s.GetModels(store.GetModelsRequest{
 		BrandID: ids.BrandID,
 		ModelID: ids.ModelID,
 		Paths: []string{
@@ -222,7 +223,7 @@ var (
 
 // getCodec retrieves codec information for a specific model and returns.
 func (s *remoteStore) getCodec(ids *ttnpb.EndDeviceVersionIdentifiers, chooseFile func(EndDeviceCodec) string) (*ttnpb.MessagePayloadFormatter, error) {
-	models, err := s.GetModels(GetModelsRequest{
+	models, err := s.GetModels(store.GetModelsRequest{
 		BrandID: ids.BrandID,
 		ModelID: ids.ModelID,
 		Paths: []string{

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package store_test
+package remote_test
 
 import (
 	"testing"
@@ -20,6 +20,7 @@ import (
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/smartystreets/assertions"
 	"go.thethings.network/lorawan-stack/v3/pkg/devicerepository/store"
+	"go.thethings.network/lorawan-stack/v3/pkg/devicerepository/store/remote"
 	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
@@ -159,8 +160,7 @@ additionalRadios: [nfc, wifi]`),
 func TestRemoteStore(t *testing.T) {
 	a := assertions.New(t)
 
-	s, err := store.NewRemoteStore(fetch.NewMemFetcher(data))
-	a.So(err, should.BeNil)
+	s := remote.NewRemoteStore(fetch.NewMemFetcher(data))
 
 	t.Run("TestGetBrands", func(t *testing.T) {
 
