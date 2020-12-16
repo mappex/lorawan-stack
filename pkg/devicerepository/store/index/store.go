@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bleve
+package index
 
 import (
 	"github.com/blevesearch/bleve"
@@ -28,7 +28,7 @@ var (
 )
 
 // GetBrands lists available end device vendors.
-func (bl *bleveStore) GetBrands(req store.GetBrandsRequest) (*store.GetBrandsResponse, error) {
+func (s *indexStore) GetBrands(req store.GetBrandsRequest) (*store.GetBrandsResponse, error) {
 	queries := []query.Query{
 		bleve.NewMatchAllQuery(),
 	}
@@ -60,9 +60,7 @@ func (bl *bleveStore) GetBrands(req store.GetBrandsRequest) (*store.GetBrandsRes
 		searchRequest.SortBy([]string{"-BrandName"})
 	}
 
-	bl.brandsIndexMu.RLock()
-	result, err := bl.brandsIndex.Search(searchRequest)
-	bl.brandsIndexMu.RUnlock()
+	result, err := s.brandsIndex.Search(searchRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +90,7 @@ func (bl *bleveStore) GetBrands(req store.GetBrandsRequest) (*store.GetBrandsRes
 }
 
 // GetModels lists available end device definitions.
-func (bl *bleveStore) GetModels(req store.GetModelsRequest) (*store.GetModelsResponse, error) {
+func (s *indexStore) GetModels(req store.GetModelsRequest) (*store.GetModelsResponse, error) {
 	queries := []query.Query{
 		bleve.NewMatchAllQuery(),
 	}
@@ -132,9 +130,7 @@ func (bl *bleveStore) GetModels(req store.GetModelsRequest) (*store.GetModelsRes
 		searchRequest.SortBy([]string{"-ModelName"})
 	}
 
-	bl.modelsIndexMu.RLock()
-	result, err := bl.modelsIndex.Search(searchRequest)
-	bl.modelsIndexMu.RUnlock()
+	result, err := s.modelsIndex.Search(searchRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -164,21 +160,21 @@ func (bl *bleveStore) GetModels(req store.GetModelsRequest) (*store.GetModelsRes
 }
 
 // GetTemplate retrieves an end device template for an end device definition.
-func (bl *bleveStore) GetTemplate(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.EndDeviceTemplate, error) {
-	return bl.store.GetTemplate(ids)
+func (s *indexStore) GetTemplate(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.EndDeviceTemplate, error) {
+	return s.store.GetTemplate(ids)
 }
 
 // GetUplinkDecoder retrieves the codec for decoding uplink messages.
-func (bl *bleveStore) GetUplinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
-	return bl.store.GetUplinkDecoder(ids)
+func (s *indexStore) GetUplinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
+	return s.store.GetUplinkDecoder(ids)
 }
 
 // GetDownlinkDecoder retrieves the codec for decoding downlink messages.
-func (bl *bleveStore) GetDownlinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
-	return bl.store.GetDownlinkDecoder(ids)
+func (s *indexStore) GetDownlinkDecoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
+	return s.store.GetDownlinkDecoder(ids)
 }
 
 // GetDownlinkEncoder retrieves the codec for encoding downlink messages.
-func (bl *bleveStore) GetDownlinkEncoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
-	return bl.store.GetDownlinkEncoder(ids)
+func (s *indexStore) GetDownlinkEncoder(ids *ttnpb.EndDeviceVersionIdentifiers) (*ttnpb.MessagePayloadFormatter, error) {
+	return s.store.GetDownlinkEncoder(ids)
 }

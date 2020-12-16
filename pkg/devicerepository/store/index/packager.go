@@ -12,25 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bleve
+package index
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"path"
+	"strings"
 
 	"github.com/blevesearch/bleve"
 	"go.thethings.network/lorawan-stack/v3/pkg/devicerepository/store"
+	"go.thethings.network/lorawan-stack/v3/pkg/devicerepository/store/remote"
 	"go.thethings.network/lorawan-stack/v3/pkg/errors"
+	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
 	"go.thethings.network/lorawan-stack/v3/pkg/jsonpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
-
-// Indexer creates an index for end device brands and models.
-type Indexer interface {
-	IndexBrands(destinationDirectory string) error
-	IndexModels(destinationDirectory string) error
-}
 
 type indexableBrand struct {
 	BrandPB  string // *ttnpb.EndDeviceBrand marshaled into JSON string
@@ -57,26 +56,46 @@ const (
 	modelsIndexPath = "modelsIndex.bleve"
 )
 
-// IndexBrands creates a new brands index, meant to be used by bleveStore.GetBrands()
-func (bl *bleveStore) IndexBrands(destinationDirectory string) error {
+func newIndex(path string, overwrite bool) (bleve.Index, error) {
 	mapping := bleve.NewIndexMapping()
-	indexPath := path.Join(destinationDirectory, brandsIndexPath)
-	index, err := bleve.New(indexPath, mapping)
+	if st, err := os.Stat(path); err == nil && st.IsDir() && overwrite {
+		if err := os.RemoveAll(path); err != nil {
+			return nil, err
+		}
+	}
+	return bleve.New(path, mapping)
+}
+
+// CreatePackage creates a new package usable by the Device Repository.
+func CreatePackage(ctx context.Context, f fetch.Interface, workingDirectory, destinationFile string, overwrite bool) error {
+	s := remote.NewRemoteStore(f)
+
+	workingDirectory = strings.TrimRight(workingDirectory, "/")
+	if err := os.MkdirAll(workingDirectory, 0755); err != nil {
+		return err
+	}
+
+	brandsIndex, err := newIndex(path.Join(workingDirectory, brandsIndexPath), overwrite)
+	if err != nil {
+		return err
+	}
+	modelsIndex, err := newIndex(path.Join(workingDirectory, modelsIndexPath), overwrite)
 	if err != nil {
 		return err
 	}
 
-	brands, err := bl.store.GetBrands(store.GetBrandsRequest{
+	brands, err := s.GetBrands(store.GetBrandsRequest{
 		Paths: ttnpb.EndDeviceBrandFieldPathsNested,
 	})
 	if err != nil {
 		return err
 	}
 
-	batch := index.NewBatch()
+	brandsBatch := brandsIndex.NewBatch()
+	modelsBatch := modelsIndex.NewBatch()
 	for _, brand := range brands.Brands {
-		log.FromContext(bl.ctx).WithField("brand_id", brand.BrandID).Debug("Indexing")
-		models, err := bl.store.GetModels(store.GetModelsRequest{
+		log.FromContext(ctx).WithField("brand_id", brand.BrandID).Debug("Indexing")
+		models, err := s.GetModels(store.GetModelsRequest{
 			Paths:   ttnpb.EndDeviceModelFieldPathsNested,
 			BrandID: brand.BrandID,
 		})
@@ -94,7 +113,7 @@ func (bl *bleveStore) IndexBrands(destinationDirectory string) error {
 		if err != nil {
 			return err
 		}
-		if err := batch.Index(brand.BrandID, indexableBrand{
+		if err := brandsBatch.Index(brand.BrandID, indexableBrand{
 			BrandPB:   string(brandPB),
 			ModelsPB:  string(modelsPB),
 			BrandID:   brand.BrandID,
@@ -102,53 +121,12 @@ func (bl *bleveStore) IndexBrands(destinationDirectory string) error {
 		}); err != nil {
 			return err
 		}
-	}
-	if err := index.Batch(batch); err != nil {
-		return err
-	}
-
-	return bl.archiver.Archive(indexPath, indexPath+bl.archiver.Suffix())
-}
-
-// IndexModels creates a new models index, meant to be used by bleveStore.GetBrands()
-func (bl *bleveStore) IndexModels(destinationDirectory string) error {
-	mapping := bleve.NewIndexMapping()
-	indexPath := path.Join(destinationDirectory, modelsIndexPath)
-	index, err := bleve.New(indexPath, mapping)
-	if err != nil {
-		return err
-	}
-
-	brands, err := bl.store.GetBrands(store.GetBrandsRequest{
-		Paths: ttnpb.EndDeviceBrandFieldPathsNested,
-	})
-	if err != nil {
-		return err
-	}
-
-	batch := index.NewBatch()
-	for _, brand := range brands.Brands {
-		log.FromContext(bl.ctx).WithField("brand_id", brand.BrandID).Debug("Indexing")
-		brandPB, err := jsonpb.TTN().Marshal(brand)
-		if err != nil {
-			return err
-		}
-		models, err := bl.store.GetModels(store.GetModelsRequest{
-			Paths:   ttnpb.EndDeviceModelFieldPathsNested,
-			BrandID: brand.BrandID,
-		})
-		if errors.IsNotFound(err) {
-			// Skip vendors without any models
-			continue
-		} else if err != nil {
-			return err
-		}
 		for _, model := range models.Models {
 			modelPB, err := jsonpb.TTN().Marshal(model)
 			if err != nil {
 				return err
 			}
-			if err := batch.Index(fmt.Sprintf("%s/%s", brand.BrandID, model.ModelID), indexableModel{
+			if err := modelsBatch.Index(fmt.Sprintf("%s/%s", brand.BrandID, model.ModelID), indexableModel{
 				BrandPB:   string(brandPB),
 				ModelPB:   string(modelPB),
 				BrandID:   brand.BrandID,
@@ -160,9 +138,21 @@ func (bl *bleveStore) IndexModels(destinationDirectory string) error {
 			}
 		}
 	}
-	if err := index.Batch(batch); err != nil {
+	if err := brandsIndex.Batch(brandsBatch); err != nil {
+		return err
+	}
+	if err := modelsIndex.Batch(modelsBatch); err != nil {
 		return err
 	}
 
-	return bl.archiver.Archive(indexPath, indexPath+bl.archiver.Suffix())
+	// archive working directory, keeping only yaml, js and index files.
+	return (&archiver{}).Archive(workingDirectory, destinationFile, func(path string) (string, bool) {
+		p := path[len(workingDirectory)+1:]
+		if !strings.HasPrefix(p, brandsIndexPath) &&
+			!strings.HasPrefix(p, modelsIndexPath) &&
+			!(strings.HasPrefix(p, "vendor") && (strings.HasSuffix(p, ".yaml") || strings.HasSuffix(p, ".js"))) {
+			return "", false
+		}
+		return p, true
+	})
 }

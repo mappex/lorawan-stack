@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bleve
+package index
 
 import (
 	"archive/zip"
@@ -20,56 +20,57 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 )
 
-// zipArchiver archives a directory into a zip file.
-type zipArchiver struct {
-	createDirectory bool
-}
+// archiver archives and extracts data from zip archives.
+type archiver struct{}
 
-func (z *zipArchiver) Suffix() string {
-	return ".zip"
-}
-
-func (z *zipArchiver) Archive(sourceDirectory, destinationFile string) error {
+func (a *archiver) Archive(sourceDirectory, destinationFile string, fileFilter func(string) (string, bool)) error {
 	f, err := os.Create(destinationFile)
 	if err != nil {
 		return err
 	}
-	archive := zip.NewWriter(f)
-	files, err := ioutil.ReadDir(sourceDirectory)
-	if err != nil {
+	z := zip.NewWriter(f)
+	if err := filepath.Walk(sourceDirectory, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		pathInArchive, ok := fileFilter(path)
+		if !ok {
+			return nil
+		}
+		w, err := z.Create(pathInArchive)
+		if err != nil {
+			return err
+		}
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if _, err := w.Write(b); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return err
 	}
-	for _, file := range files {
-		w, err := archive.Create(file.Name())
-		if err != nil {
-			return err
-		}
-		b, err := ioutil.ReadFile(path.Join(sourceDirectory, file.Name()))
-		if err != nil {
-			return err
-		}
-		if n, err := w.Write(b); err != nil || n != len(b) {
-			return err
-		}
-	}
-	return archive.Close()
+
+	return z.Close()
 }
 
-func (z *zipArchiver) Unarchive(b []byte, destinationDirectory string) error {
+func (a *archiver) Unarchive(b []byte, destinationDirectory string) error {
 	rd := bytes.NewReader(b)
 	archive, err := zip.NewReader(rd, rd.Size())
 	if err != nil {
 		return err
 	}
-	if z.createDirectory {
-		if err := os.MkdirAll(destinationDirectory, 0755); err != nil {
-			return err
-		}
-	}
 
 	for _, file := range archive.File {
+		destination := path.Join(destinationDirectory, file.Name)
+		if err := os.MkdirAll(path.Dir(destination), 0755); err != nil {
+			return err
+		}
 		r, err := file.Open()
 		if err != nil {
 			return err
